@@ -6,6 +6,8 @@ Video in, 3D Gaussian splat out, on a 6 GB consumer GPU.
 python -m thriftsplat clip.mp4 -o myscene
 ```
 
+![hotel room reconstruction](assets/hotel.jpg)
+
 Measured end to end on an **RTX 2060 (6 GB)** with 8 GB of usable system RAM:
 
 | clip | frames | point cloud | splat | total | peak VRAM |
@@ -150,6 +152,8 @@ The single most useful knob is `--grow-grad`, and it is not the one you would ex
 | sparse versus dense initial cloud | no difference |
 | feeding the reconstruction model larger images | **worse** (detail per pixel drops 39%) |
 
+![effect of the densification threshold](assets/gaussian_count.jpg)
+
 `grow_grad2d` is the densification threshold, and at the library default it stalls Gaussian growth around 300k so `--cap` never binds. Watch the printed `N` while training:
 
 - **N well below `--cap`** means the threshold is binding. Lower `--grow-grad`.
@@ -174,11 +178,39 @@ Being direct about the ceiling, because no flag fixes it.
 
 A 16% difference in parallax produced a 33% difference in reproduced detail, far more than any training setting moved. Arc or orbit rather than dollying straight in.
 
+![aerial reconstruction](assets/town.jpg)
+
 **Nadir aerial scale drift.** With no horizon in frame, "camera higher and scene farther" renders almost identically to "camera lower and scene nearer". Measured on drone footage: estimated altitude wobbled 0.100 m per frame while the drone actually moved 0.104 m laterally, and flat water reconstructed with 0.405 m of undulation. This is a known open problem; see [AeroDGS](https://cvpr.thecvf.com/virtual/2026/poster/37659) and [AerialMetric](https://arxiv.org/html/2606.29716v2). Trajectory smoothness and ground plane priors are not implemented here.
 
-**Lossy compression.** gsplat's `ply_compressed` quantises means to 11/10/11 bits, colour to 8 bits and quaternions to 10 bits. It is roughly 5x smaller and it does cost detail. ThriftSplat writes the lossless float32 `.ply` by default.
+**Lossy compression is available and cheaper than it sounds.** See the section below.
 
 ---
+
+## Compression
+
+Both files are written by default. `splat.ply` is lossless float32 and is the
+master copy; `splat_compressed.ply` uses gsplat's quantised format, which is
+what SuperSplat prefers to load.
+
+Measured on a 1.5M Gaussian scene rather than inferred from the bit depths:
+
+| | value |
+|---|---|
+| size | 5x smaller (450 MB to 80 MB) |
+| mean position error | 1.26 mm |
+| worst position error | 2.69 mm |
+| as a fraction of scene extent | 0.018% |
+| spherical harmonic DC error | 0.005 on a range of about 12 |
+| Gaussians dropped (opacity below 1/255) | 23.5% |
+
+The quantisation is per chunk of 256 splats, so each chunk normalises over a
+small volume and 11 bits goes a long way. **1.26 mm is well under the 20 mm
+voxel the input point cloud is built at**, so the positional error is below the
+resolution of the geometry feeding it.
+
+The visible effect is really the opacity cull, which removes Gaussians that
+were contributing almost nothing. Use the compressed file for sharing and web
+viewers, and keep the plain `.ply` as the master. Disable with `--compress 0`.
 
 ## Notes for anyone hitting the same walls
 

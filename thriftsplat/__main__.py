@@ -44,6 +44,7 @@ def main():
     s.add_argument("--cap", type=int, default=1800000, help="maximum Gaussians")
     s.add_argument("--grow-grad", type=float, default=5e-5, help="densification threshold, lower grows more")
     s.add_argument("--init-points", type=int, default=150000, help="init cloud subsample, 0 for all")
+    s.add_argument("--compress", type=int, default=1, help="also write a 5x smaller quantised copy")
 
     args = ap.parse_args()
 
@@ -83,7 +84,7 @@ def main():
             "train_gsplat", scene_dir, "-o", splat_dir,
             "--iters", str(args.iters), "--width", str(args.width),
             "--cap", str(args.cap), "--grow-grad", str(args.grow_grad),
-            "--init-points", str(args.init_points),
+            "--init-points", str(args.init_points), "--compress", str(args.compress),
             "--preview-every", "2500", "--save-every", "1000",
         ]
         train_gsplat.main()

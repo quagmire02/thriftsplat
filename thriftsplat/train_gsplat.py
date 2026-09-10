@@ -241,6 +241,11 @@ def main():
                          "and THE dominant quality lever: 5e-5 vs the library default 2e-4 "
                          "gave 5x the Gaussians, -21%% mean L1, -18%% edge L1. --cap does not "
                          "bind at the library default, so this is what sets the real count")
+    ap.add_argument("--compress", type=int, default=1,
+                    help="also write splat_compressed.ply. Measured on a 1.5M splat: "
+                         "5x smaller, 1.26mm mean position error (the input cloud is "
+                         "voxelised at 20mm), and drops 23.5%% of Gaussians below "
+                         "opacity 1/255. Good for sharing, keep the plain ply as master")
     ap.add_argument("--save-every", type=int, default=1000,
                     help="checkpoint splat.ply every N iters. Rasteriser memory grows "
                          "superlinearly in Gaussian count, so an OOM late in training is "
@@ -362,7 +367,11 @@ def main():
           f"({dt/args.iters*1000:.0f} ms/iter, {len(imgs)} views @ {W}x{H})")
     out = os.path.join(args.output, "splat.ply")
     save_splat(params, out)
-    save_splat(params, os.path.join(args.output, "splat_compressed.ply"), compressed=True)
+    if args.compress:
+        cpath = os.path.join(args.output, "splat_compressed.ply")
+        save_splat(params, cpath, compressed=True)
+        a, b = os.path.getsize(out), os.path.getsize(cpath)
+        print(f"compressed copy: {b/1e6:.0f} MB vs {a/1e6:.0f} MB ({a/b:.1f}x smaller)")
     print(f"\n{params['means'].shape[0]:,} gaussians -> {out}")
     if pose_opt is not None:
         d = pose_delta.detach()

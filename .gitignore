@@ -6,6 +6,8 @@ __pycache__/
 *.npz
 *.mp4
 *.jpg
+*.mp4
+!assets/*.jpg
 *.png
 data/
 scene*/
