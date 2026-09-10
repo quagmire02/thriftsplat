@@ -1,0 +1,16 @@
+# Install with ./install.sh, which pins the versions that must be pinned and
+# explains why. This file documents the direct dependencies only.
+#
+# torch/torchvision/torchaudio must come from the cu124 index and must match
+# each other. torchaudio in particular publishes no torch pin, so an unpinned
+# install pairs a newer build with your torch and fails at import.
+torch==2.6.0
+torchvision==0.21.0
+torchaudio==2.6.0
+gsplat>=1.5.3
+scipy
+plyfile
+numpy
+Pillow
+opencv-python-headless
+# mapanything is installed from source by install.sh (pyproject requires >=3.10)

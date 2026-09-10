@@ -1,0 +1,13 @@
+.venv/
+third_party/
+__pycache__/
+*.pyc
+*.ply
+*.npz
+*.mp4
+*.jpg
+*.png
+data/
+scene*/
+splat*/
+myscene/
